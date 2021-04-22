@@ -9,12 +9,13 @@
           \multicolumn{1}{|c|}{Std} & \multicolumn{1}{|c||}{Grp} &
           \multicolumn{1}{|c|}{Std} & \multicolumn{1}{|c||}{Grp} \\
 \hline
-    1 & 164 &  308 &  236 &  390 &  328 &  472 \\
-    2 & 329 &  462 &  472 &  585 &  655 &  708 \\
-    3 & 494 &  616 &  708 &  780 &  982 &  944 \\
-    4 & 658 &  770 &  944 &  975 & 1310 & 1180 \\
-    5 & 822 &  924 & 1180 & 1170 & 1638 & 1416 \\
-    6 & 987 & 1078 & 1416 & 1365 & 1965 & 1652 \\
+    1 &  164 &  308 &  236 &  390 &  328 &  472 \\
+    2 &  329 &  462 &  472 &  585 &  655 &  708 \\
+    3 &  494 &  616 &  708 &  780 &  982 &  944 \\
+    4 &  658 &      &  944 &  975 & 1310 & 1180 \\
+    5 &  822 &      & 1180 & 1170 & 1638 & 1416 \\
+    6 &  987 &      & 1416 & 1365 & 1965 & 1652 \\
+    7 & 1152 &      & 1652 &      & 2292 & 1888 \\
 \hline
 \end{tabular}
 \caption[Malicious $\gpk_{j}$ Accusation Gas Cost]{
@@ -23,6 +24,8 @@ $\gpk_{j}$ accusation. The cost is listed in thousands of gas
 for the Ethereum Virtual Machine.
 Here, $n$ is the number of total participants and $m$ is the number
 of malicious actors.
+There are no entries in the group method when group accusations
+are not possible due to no BFT majority.
 }
 \label{tab:gpkj_gas_cost}
 \end{table}
