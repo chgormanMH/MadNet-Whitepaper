@@ -247,7 +247,7 @@ cryptographic hash function as a big endian unsigned integer.
 This can be seen in lines 4 and 5 of $\textsc{HashToBase}$
 as the function named $\texttt{b2u}$.
 Although we may naively map from $\Z$ to $\Z_{p}$ by simply taking the
-ouput of $H$ modulo $p$, this would be insecure in our setting due to the
+output of $H$ modulo $p$, this would be insecure in our setting due to the
 nonuniformity of this operation.
 In order to ensure the mapping from $\Z$ to $\Z_{p}$ is more
 uniformly distributed, domain separation is utilized.

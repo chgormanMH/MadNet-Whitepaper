@@ -280,10 +280,10 @@ From there, we will ensure
 \noindent
 Requiring submission of $\gpk_{j}^{*}$ and the associated
 proof could be required at the time of submission.
-This would be costly, though, and will instead allow
+This would be costly, though, and we will instead allow
 the other participants to prove malicious behavior.
 We would prefer the entire process to be as inexpensive
-as possible should there be no malicious actors.
+as possible if there are no malicious actors.
 
 It will be expensive to carry out this proof of malicious action.
 The reason is that in order to compute $\gpk_{j}^{*}$,
@@ -291,22 +291,21 @@ the message containing the shared secrets and public coefficients
 from every participant will need to be entered into a smart contract
 in order to obtain the right hand side of
 Eq.~\eqref{eq:gpkj_star_def}.
-Because of this, there is another, cheaper way to prove malicious
+Because of this, there is another, potentially cheaper way to prove malicious
 behavior provided a Byzantine-fault tolerant group
 correctly submits $\gpk_{j}$ with valid signatures $\sigma_{j}$
 and we discuss this now.
 
-First, a participant can go through all possible subgroups
-$\mathcal{R}\subseteq\mathcal{Q}$ searching for a subset
-whose signatures can be combined to form a valid
-group signature.
-Once a valid subset $\mathcal{R}$ is found,
-we can then choose $P_{i}\in\mathcal{Q}\setminus\mathcal{R}$
-in order to determine if
-$\braces{P_{i}}\cup\parens{\mathcal{R}\setminus \braces{P_{v}}}$
-can form a valid signature;
-if it does not, then $P_{i}$ is malicious.
-Here $P_{v}\in\mathcal{R}$ is a fixed.
+First, a participant can check to see which participants
+correctly submitted $\gpk_{j}$;
+this can be done using the previous method.
+Let $\mathcal{R}\subseteq\mathcal{Q}$ form a Byzantine fault tolerant
+majority consisting of actors who correctly shared $\gpk_{j}$;
+this would imply that $\mathcal{R}$ can form a valid group signature.
+Fix an honest participant $P_{v}\in\mathcal{R}$.
+If $P_{i}\in\mathcal{Q}\setminus\mathcal{R}$ is malicious,
+then $\braces{P_{i}}\cup\parens{\mathcal{R}\setminus \braces{P_{v}}}$
+will not be able to form a valid group signature.
 In this case, two lists of participants would be entered into a smart
 contract: a list of valid participants followed by a list of
 invalid participants.
@@ -364,16 +363,16 @@ and these are performed $t+1$ times.
 Then, there are $t$ \textsc{ECMul} operations.
 Finally, there are $t$ additional \textsc{ECAdd} operations.
 Combining these, there are $t$ calls to \textsc{ECMul},
-$nt$ calls to \textsc{ECAdd}, and one call to \textsc{PairingCheck}.
+$nt + n$ calls to \textsc{ECAdd}, and one call to \textsc{PairingCheck}.
 Thus, we see
 
 \begin{equation}
-    \text{Cost of Standard Proof} \sim 113000 + 4000n + 100n^{2}.
+    \text{Cost of Standard Proof} \sim 113000 + 4150n + 100n^{2}.
     \label{eq:cost_standard}
 \end{equation}
 
 \noindent
-For $n=20$, this corresponds to $223$K gas;
+For $n=20$, this corresponds to $236$K gas;
 the gas limit is 10M.
 
 We now look at the cost of the group method
@@ -385,16 +384,7 @@ The computation consists of forming
 \end{equation}
 
 \noindent
-where
-
-\begin{equation}
-    \mathcal{R}^{*}_{k} = \parens{\mathcal{R}\setminus P_{v}}\cup
-        \braces{P_{k}}
-\end{equation}
-
-\noindent
-for $P_{v}\in\mathcal{R}$ fixed and $P_{k}\in\mathcal{I}$,
-the set of participants who incorrectly shared $\gpk_{j}$.
+where $\abs{\mathcal{R}^{*}_{k}} = t+1$.
 From there, we would call
 
 \begin{equation}
@@ -420,9 +410,12 @@ We recall from Eq.~\eqref{eq:Rj_coefs} that
 Naively, we would need to compute $t$ finite field inversions,
 which corresponds to $t$ \textsc{ModExp} calls, to compute
 $R_{j}$.
-This must be performed $t+1$ times to form $\sigma$.
+This must be performed $t+1$ times to form $\sigma$
+for a total cost of $O(n^{2})$ \textsc{ModExp} calls.
+Looking at the Table~\ref{tab:evm_gas_cost}, we notice this gas cost
+is too expensive.
 If we precompute these inverses and include them
-in the function call, then this will greatly reduce the overall gas cost.
+in the function call, then the overall gas cost will be greatly reduced.
 At the beginning of the call, we check to make sure that the submitted
 inverses are valid; if they are valid, we proceed with the
 accusation, and if they are invalid, we stop.
@@ -432,13 +425,13 @@ and one pairing check per signature check.
 Thus, the cost to check one signature is
 
 \begin{equation}
-    \text{Cost of Efficient Group Proof} \sim 113000 + 4100n.
+    \text{Cost of Group Proof} \sim 113000 + 4100n.
     \label{eq:cost_group}
 \end{equation}
 
 \noindent
 For $n=20$, this corresponds to $195$K gas.
-This is sligntly more efficient than computing $\gpk_{j}^{*}$,
+This is slightly more efficient than computing $\gpk_{j}^{*}$,
 but this is not the whole story.
 
 We now take time to make a valid comparison between the
