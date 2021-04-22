@@ -337,28 +337,47 @@ and EIP-1108\footnote{
 We begin with the standard method.
 First, to compute $\gpk_{j}^{*}$, we must compute $F_{i}(j)$:
 
-\begin{equation}
-    F_{i}(j) = C_{i0}C_{i1}^{j}C_{i2}^{j^{2}}\cdots C_{it}^{j^{t}}.
-\end{equation}
+\begin{align}
+    F_{i}(j) &= C_{i0}C_{i1}^{j}C_{i2}^{j^{2}}\cdots C_{it}^{j^{t}} \nonumber\\
+        &= \prod_{k=0}^{t} C_{ik}^{j^{k}}.
+    \label{eq:Fij_def}
+\end{align}
 
 \noindent
 The cost of computing $F_{i}(j)$ is dominated by $t$ calls to \textsc{ECMul}.
-This will be done for each element in $\mathcal{Q}$, so the
-main computation is $nt$ calls to \textsc{ECMul} in addition
-to a call to \textsc{PairingCheck}.
+Let us look at Eq.~\eqref{eq:gpkj_star_def} along with Eq.~\eqref{eq:Fij_def}:
+
+\begin{align}
+    \gpk_{j}^{*} &= \prod_{P_{i}\in\mathcal{Q}}F_{i}(j) \nonumber\\
+        &= \prod_{P_{i}\in\mathcal{Q}}
+                \brackets{\prod_{k=0}^{t} C_{ik}^{j^{k}}}
+            \nonumber\\
+        &= \prod_{k=0}^{t}
+            \brackets{\prod_{P_{i}\in\mathcal{Q}} C_{ik}^{j^{k}}} \nonumber\\
+        &= \prod_{k=0}^{t}
+            \brackets{\prod_{P_{i}\in\mathcal{Q}} C_{ik}}^{j^{k}}
+\end{align}
+
+\noindent
+Inside the brackets, we perform $n-1$ \textsc{ECAdd} operations,
+and these are performed $t+1$ times.
+Then, there are $t$ \textsc{ECMul} operations.
+Finally, there are $t$ additional \textsc{ECAdd} operations.
+Combining these, there are $t$ calls to \textsc{ECMul},
+$nt$ calls to \textsc{ECAdd}, and one call to \textsc{PairingCheck}.
 Thus, we see
 
 \begin{equation}
-    \text{Cost of Standard Proof} \sim 113000 + 4000n^{2}.
+    \text{Cost of Standard Proof} \sim 113000 + 4000n + 100n^{2}.
+    \label{eq:cost_standard}
 \end{equation}
 
 \noindent
-For $n=20$, this corresponds to $1.7$M gas; the gas limit
-is 10M.
+For $n=20$, this corresponds to $223$K gas;
+the gas limit is 10M.
 
-We now look at the cost of the group method.
-We will ignore the initial cost of ensuring a valid group signature
-from $\mathcal{R}$.
+We now look at the cost of the group method
+and start by determining the cost of the group signature.
 The computation consists of forming
 
 \begin{equation}
@@ -383,9 +402,7 @@ From there, we would call
 \end{equation}
 
 \noindent
-to ensure that this is an invalid signature,
-and the initial check confirming $\mathcal{R}$ forms a valid
-signature implies that $P_{k}$ is malicious.
+to ensure that this is a valid or invalid signature as appropriate.
 
 Each group signature $\sigma$ will require forming $R_{j}$
 and computing $\sigma_{j}^{R_{j}}$.
@@ -403,56 +420,59 @@ We recall from Eq.~\eqref{eq:Rj_coefs} that
 Naively, we would need to compute $t$ finite field inversions,
 which corresponds to $t$ \textsc{ModExp} calls, to compute
 $R_{j}$.
-This must be performed $t+1$ times to form $\sigma$;
-we must also call \textsc{ECMul} $t+1$ times but this is
-negligible.
-Finally, we must call
-
-\begin{equation}
-    \textsc{PairingCheck}(\sigma, \bar{h}_{2}, H_{2C}(M), \text{mpk});
-\end{equation}
-
-\noindent
-this call must fail for invalid signatures.
-Thus, we have
-
-\begin{equation}
-    \text{Cost of Naive Group Proof} \sim 113000 + 5800n^{2}.
-\end{equation}
-
-\noindent
-For $n=20$, this corresponds to $2.4$M gas.
-This is more expensive than the previous version, but we can
-do better.
-
-The main cost comes from the finite field inversions, which require
-a call to \textsc{ModExp}.
-To fix this, we precompute these inverses and include them
-in the function call.
+This must be performed $t+1$ times to form $\sigma$.
+If we precompute these inverses and include them
+in the function call, then this will greatly reduce the overall gas cost.
 At the beginning of the call, we check to make sure that the submitted
 inverses are valid; if they are valid, we proceed with the
 accusation, and if they are invalid, we stop.
-Everything else is the same as before;
-see Alg.~\ref{alg:grpsig_malicious} for the complete description.
-For each accusation, the main cost is $t+1$ \textsc{ECMul} calls
-as well as one pairing check.
-Now, these same computations must be included for the initial
-check of a valid group signature, but we will ignore that for now.
-Thus, we have the cost to prove malicious action for one participant:
+See Alg.~\ref{alg:grpsig_malicious} for the complete description.
+There are $t+1$ \textsc{ECMul} operations, $t$ \textsc{ECAdd} operations,
+and one pairing check per signature check.
+Thus, the cost to check one signature is
 
 \begin{equation}
-    \text{Cost of Efficient Group Proof} \sim 113000 + 4000n.
+    \text{Cost of Efficient Group Proof} \sim 113000 + 4100n.
+    \label{eq:cost_group}
 \end{equation}
 
 \noindent
-For $n=20$, this corresponds to $200$K gas.
-This is more efficient than computing $\gpk_{j}^{*}$ via smart contract.
+For $n=20$, this corresponds to $195$K gas.
+This is sligntly more efficient than computing $\gpk_{j}^{*}$,
+but this is not the whole story.
 
-Due to the costs, validators would always prefer to use the group
-method over submitting all of the sent messages.
-Even so, submitting all messages will always work, while in the group
-setting we require a Byzantine-fault tolerant set of honest
-validators.
+We now take time to make a valid comparison between the
+standard accusation (computing $\gpk_{j}$ and group accusation
+(computing group signatures).
+First, the standard accusation additional gas cost associated
+with submitted and verifying public information related to the
+encrypted shares and public coefficients;
+we do not include an analysis of these costs at this time
+and will look at doing that in the future.
+
+By directly comparing Eq.\eqref{eq:cost_standard} and
+Eq.~\eqref{eq:cost_group}, it would appear that the group accusation
+is more efficient.
+Of course, we must remember if there are $m$ malicious participants,
+then there are $m$ computations of $\gpk_{j}$,
+while there are $m+1$ computations of group signatures.
+Furthermore, group signatures have the additional restriction that
+there \emph{must} be a honest majority.
+Thus, for a valid comparison to be made, we must know the
+number of participants as well as the total number of malicious actors.
+Tab.~\ref{tab:gpkj_gas_cost} lists the gas cost for select values.
+Note that the table does not include the cost associated
+with entering the necessary information for the standard accusation;
+even so, this is reasonable estimate.
+
+\input{tables/gpkj_accusation_cost.tex}
+
+In all cases, multiple malicious actors could be accused
+in a single transaction and still stay well below the 10M gas limit.
+Due to the different cost functions, the exact method will depend
+on how many validators are dishonest and the total number of participants.
+The standard accusation always works even though the cost function
+grows more quickly.
 
 \input{algs/gpkj_algs.tex}
 
