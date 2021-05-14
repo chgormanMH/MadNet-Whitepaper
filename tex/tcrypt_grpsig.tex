@@ -285,20 +285,19 @@ the other participants to prove malicious behavior.
 We would prefer the entire process to be as inexpensive
 as possible if there are no malicious actors.
 
-It will be expensive to carry out this proof of malicious action.
-The reason is that in order to compute $\gpk_{j}^{*}$,
-the message containing the shared secrets and public coefficients
-from every participant will need to be entered into a smart contract
+Computing $\gpk_{j}^{*}$ in a nontrivial task as
+the shared secrets and public coefficients
+from every participant must be entered into a function call
 in order to obtain the right hand side of
 Eq.~\eqref{eq:gpkj_star_def}.
 Because of this, there is another, potentially cheaper way to prove malicious
 behavior provided a Byzantine-fault tolerant group
-correctly submits $\gpk_{j}$ with valid signatures $\sigma_{j}$
+correctly submits $\gpk_{j}$ with valid signatures $\sigma_{j}$,
 and we discuss this now.
 
 First, a participant can check to see which participants
 correctly submitted $\gpk_{j}$;
-this can be done using the previous method.
+this can be done offline using the previous method.
 Let $\mathcal{R}\subseteq\mathcal{Q}$ form a Byzantine fault tolerant
 majority consisting of actors who correctly shared $\gpk_{j}$;
 this would imply that $\mathcal{R}$ can form a valid group signature.
@@ -435,7 +434,7 @@ This is slightly more efficient than computing $\gpk_{j}^{*}$,
 but this is not the whole story.
 
 We now take time to make a valid comparison between the
-standard accusation (computing $\gpk_{j}$ and group accusation
+standard accusation (computing and testing $\gpk_{j}$) and group accusation
 (computing group signatures).
 First, the standard accusation additional gas cost associated
 with submitted and verifying public information related to the
